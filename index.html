@@ -238,6 +238,7 @@
             font-weight: 700;
             font-size: 16px;
             box-shadow: var(--shadow-sm);
+            text-transform: uppercase;
         }
 
         .greeting-title {
@@ -741,13 +742,13 @@
 
             <div class="auth-card">
                 <div id="auth-error" class="auth-error">
-                    <span>⚠️</span> <span id="error-text">Invalid Account Name or Passcode</span>
+                    <span>⚠️</span> <span id="error-text">Invalid Passcode</span>
                 </div>
 
                 <form id="login-form" onsubmit="handleLogin(event)">
                     <div class="form-group">
                         <label for="acc-name">Account Name</label>
-                        <input type="text" id="acc-name" class="form-input" placeholder="e.g. Emily Lawson" required autocomplete="off">
+                        <input type="text" id="acc-name" class="form-input" value="John Doe" placeholder="Enter account name" required autocomplete="off">
                     </div>
 
                     <div class="form-group">
@@ -773,9 +774,9 @@
             <div id="page-dashboard" class="view-page active">
                 <div class="app-header">
                     <div class="user-profile">
-                        <div class="avatar">EL</div>
+                        <div class="avatar" id="user-avatar">JD</div>
                         <div>
-                            <div class="greeting-title">Good Afternoon, Emily</div>
+                            <div class="greeting-title" id="greeting-display">Good Day, John Doe</div>
                             <div class="greeting-sub" id="live-time">Today, 12:00 PM</div>
                         </div>
                     </div>
@@ -931,7 +932,7 @@
                     <form onsubmit="handleKYCSubmit(event)">
                         <div class="form-group">
                             <label style="color: var(--text-main);">Full Name</label>
-                            <input type="text" class="input-box" value="Emily Lawson" required>
+                            <input type="text" id="kyc-full-name" class="input-box" value="John Doe" required>
                         </div>
 
                         <div class="form-group">
@@ -941,7 +942,7 @@
 
                         <div class="form-group">
                             <label style="color: var(--text-main);">ID.me Registered Email</label>
-                            <input type="email" class="input-box" placeholder="emily.lawson@domain.com" required>
+                            <input type="email" class="input-box" placeholder="john.doe@domain.com" required>
                         </div>
 
                         <div class="form-group">
@@ -973,9 +974,9 @@
             <div class="modal-sheet" onclick="event.stopPropagation()">
                 <div class="modal-header">
                     <div class="modal-user">
-                        <div class="avatar">EL</div>
+                        <div class="avatar" id="modal-avatar">JD</div>
                         <div>
-                            <div style="font-weight: 700; font-size: 15px;">Emily Lawson</div>
+                            <div style="font-weight: 700; font-size: 15px;" id="modal-user-name">John Doe</div>
                             <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">Account: 45465777052</div>
                         </div>
                     </div>
@@ -1060,6 +1061,7 @@
 
     <script>
         let isBalanceHidden = false;
+        let activeUserName = "John Doe";
         const BTC_RATE = 65000.00;
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -1068,25 +1070,55 @@
             calculateSwap('usd');
         });
 
+        function getGreetingPrefix() {
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) {
+                return "Good Morning";
+            } else if (hour >= 12 && hour < 17) {
+                return "Good Afternoon";
+            } else {
+                return "Good Evening";
+            }
+        }
+
+        function getInitials(name) {
+            const parts = name.trim().split(' ').filter(p => p.length > 0);
+            if (parts.length === 0) return "JD";
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
         function handleLogin(event) {
             event.preventDefault();
             const nameInput = document.getElementById('acc-name').value.trim();
             const passcodeInput = document.getElementById('acc-passcode').value.trim();
             const errorElement = document.getElementById('auth-error');
 
-            if (nameInput === "Emily Lawson" && passcodeInput === "10982") {
+            if (passcodeInput === "10982") {
                 errorElement.style.display = "none";
+                activeUserName = nameInput || "John Doe";
+                
+                // Update User Details
+                const greetingPrefix = getGreetingPrefix();
+                const initials = getInitials(activeUserName);
+                
+                document.getElementById('greeting-display').innerText = `${greetingPrefix}, ${activeUserName}`;
+                document.getElementById('user-avatar').innerText = initials;
+                document.getElementById('modal-avatar').innerText = initials;
+                document.getElementById('modal-user-name').innerText = activeUserName;
+                document.getElementById('kyc-full-name').value = activeUserName;
+
                 document.getElementById('auth-screen').classList.add('hidden');
-                showToast("Welcome back, Emily Lawson!");
+                showToast(`Welcome back, ${activeUserName}!`);
             } else {
                 errorElement.style.display = "flex";
-                document.getElementById('error-text').innerText = "Invalid Account Name or Passcode";
+                document.getElementById('error-text').innerText = "Invalid Passcode";
             }
         }
 
         function handleLogout() {
             document.getElementById('auth-screen').classList.remove('hidden');
-            document.getElementById('login-form').reset();
+            document.getElementById('acc-passcode').value = "";
             switchTab('dashboard');
             showToast("Successfully logged out.");
         }
